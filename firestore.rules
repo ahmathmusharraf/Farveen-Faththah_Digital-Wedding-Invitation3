@@ -60,7 +60,7 @@ service cloud.firestore {
     // Public Guestbook & Duas
     match /wishes/{wishId} {
       allow read: if true;
-      allow create: if isValidId(wishId) && isValidWishDua(incoming()) && incoming().id == wishId && incoming().likes == 0;
+      allow create: if isValidId(wishId) && isValidWishDua(incoming()) && incoming().id == wishId && incoming().likes >= 0 && incoming().likes <= 50;
       allow update: if isValidId(wishId)
         && isValidWishDua(incoming())
         && incoming().diff(existing()).affectedKeys().hasOnly(['likes'])
