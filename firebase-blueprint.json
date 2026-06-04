@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "RSVP": {
+      "title": "RSVP",
+      "description": "Guest RSVP records for the wedding",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "name": { "type": "string", "description": "Name of the guest" },
+        "attending": { "type": "boolean", "description": "Attendance status" },
+        "guestsCount": { "type": "integer", "description": "Number of guests" },
+        "dietaryRequirements": { "type": "string", "description": "Dietary requirements or food preference" },
+        "message": { "type": "string", "description": "Optional wishing card or blessing message" },
+        "whatsappContact": { "type": "string", "description": "WhatsApp phone number" },
+        "needsParking": { "type": "boolean", "description": "Whether the guest requested hotel parking" },
+        "parkingSpaces": { "type": "integer", "description": "The number of hotel parking spots requested" },
+        "createdAt": { "type": "integer", "description": "Epoch timestamp of RSVP submission" }
+      },
+      "required": ["id", "name", "attending", "guestsCount", "dietaryRequirements", "message", "whatsappContact", "createdAt"]
+    },
+    "WishDua": {
+      "title": "WishDua",
+      "description": "Blessings, duas, and congratulations posted to the public guestbook",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "name": { "type": "string", "description": "Name of the author" },
+        "message": { "type": "string", "description": "The wish text or dua" },
+        "category": { "type": "string", "enum": ["Blessing", "Dua", "Love", "Congratulations"], "description": "The emotional theme" },
+        "likes": { "type": "integer", "description": "Likes counter" },
+        "createdAt": { "type": "integer", "description": "Epoch timestamp of message submission" }
+      },
+      "required": ["id", "name", "message", "category", "likes", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/rsvps/{rsvpId}": {
+      "schema": "RSVP",
+      "description": "Public guest registry for submitting RSVP records"
+    },
+    "/wishes/{wishId}": {
+      "schema": "WishDua",
+      "description": "Public interactive digital guestbook for sharing blessings"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Islamic Digital Wedding Invitation",
+  "description": "An elegant, interactive digital Muslim wedding invitation featuring a responsive mobile-first design, event countdown, interactive RSVP management, and a guest wishes book.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

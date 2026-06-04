@@ -1,0 +1,286 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", "Cinzel", "Amiri", serif;
+  --font-sans: "Montserrat", sans-serif;
+  --font-decorative: "Cinzel Decorative", serif;
+}
+
+body {
+  background-color: #fcfaf7;
+  color: #1b1612;
+  overflow-x: hidden;
+}
+
+/* Elegant gold/emerald customized scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(212, 175, 55, 0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 9px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 78, 59, 0.4);
+}
+
+/* Custom premium CSS transitions and keyframes */
+@keyframes gold-shine {
+  0% {
+    transform: translate3d(-100%, 0, 0) rotate(12deg);
+  }
+  100% {
+    transform: translate3d(200%, 0, 0) rotate(12deg);
+  }
+}
+
+.animate-gold-shine {
+  animation: gold-shine 3.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Beautiful static glow with high performance hardware acceleration */
+.animate-gold-glow {
+  box-shadow: 0 25px 60px -15px rgba(20, 15, 10, 0.95), 0 0 35px rgba(217, 119, 6, 0.18);
+  transition: box-shadow 0.4s ease;
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0) rotate(1deg);
+  }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 6s infinite ease-in-out;
+  will-change: transform;
+}
+
+/* Elegant gold line sweep animation with shimmers */
+@keyframes gold-line-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-gold-line {
+  background: linear-gradient(
+    90deg, 
+    rgba(217, 119, 6, 0.1) 0%, 
+    rgba(245, 158, 11, 0.7) 35%, 
+    rgba(255, 255, 255, 0.95) 50%, 
+    rgba(245, 158, 11, 0.7) 65%, 
+    rgba(217, 119, 6, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: gold-line-sweep 4s infinite linear;
+  will-change: background-position;
+}
+
+/* Micro pulsed laser glow effect */
+@keyframes gold-glow-laser {
+  0%, 100% { 
+    opacity: 0.65; 
+  }
+  50% { 
+    opacity: 1; 
+  }
+}
+
+.animate-gold-glow-laser {
+  animation: gold-glow-laser 2.5s infinite ease-in-out;
+  will-change: opacity;
+}
+
+/* Gold laser lines running along container edges optimized with 3D translation */
+@keyframes laser-top {
+  0% { transform: translate3d(-100%, 0, 0); }
+  50%, 100% { transform: translate3d(100%, 0, 0); }
+}
+@keyframes laser-right {
+  0%, 25% { transform: translate3d(0, -100%, 0); }
+  75%, 100% { transform: translate3d(0, 100%, 0); }
+}
+@keyframes laser-bottom {
+  0%, 50% { transform: translate3d(100%, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes laser-left {
+  0%, 75% { transform: translate3d(0, 100%, 0); }
+  100% { transform: translate3d(0, -100%, 0); }
+}
+
+.animate-laser-t {
+  animation: laser-top 4s infinite linear;
+  will-change: transform;
+}
+.animate-laser-r {
+  animation: laser-right 4s infinite linear;
+  will-change: transform;
+}
+.animate-laser-b {
+  animation: laser-bottom 4s infinite linear;
+  will-change: transform;
+}
+.animate-laser-l {
+  animation: laser-left 4s infinite linear;
+  will-change: transform;
+}
+
+/* Static, compiled keyframes of GlitterDust for iOS speed */
+@keyframes drift {
+  0% {
+    transform: translate3d(0px, -20px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--particle-opacity, 0.5);
+  }
+  90% {
+    opacity: var(--particle-opacity, 0.5);
+  }
+  100% {
+    transform: translate3d(80px, 110vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Safe -webkit-backdrop-filter mapping for iOS Safari */
+.backdrop-blur-md {
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+}
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+}
+.backdrop-blur-sm {
+  -webkit-backdrop-filter: blur(4px) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* Rotating conic golden border */
+@keyframes border-rotate-gold {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-border-rotate {
+  animation: border-rotate-gold 8s infinite linear;
+}
+
+/* Google Sign-In button official branding styles */
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-appearance: none;
+  background-color: WHITE;
+  background-image: none;
+  border: 1px solid #e0dfdc;
+  -webkit-border-radius: 9999px;
+  border-radius: 9999px;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  height: 38px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 16px;
+  position: relative;
+  text-align: center;
+  -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
+  transition: background-color .218s, border-color .218s, box-shadow .218s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: auto;
+  min-width: min-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 18px;
+  margin-right: 10px;
+  min-width: 18px;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  -webkit-align-items: center;
+  align-items: center;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  -webkit-flex-grow: 1;
+  flex-grow: 1;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 750;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1e293b;
+  text-align: left;
+}
+
+.gsi-material-button .gsi-material-button-state {
+  -webkit-transition: opacity .15s linear;
+  transition: opacity .15s linear;
+  background-color: #303030;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.gsi-material-button:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.gsi-material-button:hover .gsi-material-button-state {
+  opacity: 0.02;
+}
+
+.gsi-material-button:focus .gsi-material-button-state {
+  opacity: 0.08;
+}
+
+.gsi-material-button:active {
+  background-color: #f1f5f9;
+}
+
+.gsi-material-button:active .gsi-material-button-state {
+  opacity: 0.1;
+}
+
+
+

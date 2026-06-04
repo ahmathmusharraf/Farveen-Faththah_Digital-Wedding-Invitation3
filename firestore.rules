@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidRSVP(data) {
+      return data.keys().hasAll(['id', 'name', 'attending', 'guestsCount', 'dietaryRequirements', 'message', 'whatsappContact', 'createdAt'])
+        && data.keys().size() <= 10
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 256
+        && data.attending is bool
+        && data.guestsCount is int && data.guestsCount >= 0 && data.guestsCount <= 50
+        && data.dietaryRequirements is string && data.dietaryRequirements.size() <= 128
+        && data.message is string && data.message.size() <= 2000
+        && data.whatsappContact is string && data.whatsappContact.size() <= 64
+        && data.createdAt is int
+        && (!('needsParking' in data) || data.needsParking is bool)
+        && (!('parkingSpaces' in data) || (data.parkingSpaces is int && data.parkingSpaces >= 0 && data.parkingSpaces <= 10));
+    }
+
+    function isValidWishDua(data) {
+      return data.keys().hasAll(['id', 'name', 'message', 'category', 'likes', 'createdAt'])
+        && data.keys().size() == 6
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 256
+        && data.message is string && data.message.size() <= 2000
+        && data.category is string && data.category in ['Blessing', 'Dua', 'Love', 'Congratulations']
+        && data.likes is int && data.likes >= 0
+        && data.createdAt is int;
+    }
+
+    // --- Collection Routes ---
+
+    // Public RSVP Registry
+    match /rsvps/{rsvpId} {
+      allow read: if true;
+      allow create: if isValidId(rsvpId) && isValidRSVP(incoming()) && incoming().id == rsvpId;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Public Guestbook & Duas
+    match /wishes/{wishId} {
+      allow read: if true;
+      allow create: if isValidId(wishId) && isValidWishDua(incoming()) && incoming().id == wishId && incoming().likes == 0;
+      allow update: if isValidId(wishId)
+        && isValidWishDua(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['likes'])
+        && incoming().likes == existing().likes + 1;
+      allow delete: if false;
+    }
+  }
+}
