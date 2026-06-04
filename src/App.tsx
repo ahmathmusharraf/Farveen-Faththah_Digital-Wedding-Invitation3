@@ -163,7 +163,11 @@ export default function App() {
 
   // Real-time Firestore synchronizer
   useEffect(() => {
-    const testConnection = async () => {
+    let isMounted = true;
+    let unsubscribeRSVPs = () => {};
+    let unsubscribeWishes = () => {};
+
+    const setupSync = async () => {
       try {
         await getDocFromServer(doc(db, 'test', 'connection'));
       } catch (error) {
@@ -171,49 +175,60 @@ export default function App() {
           console.warn("Please check your Firebase configuration.");
         }
       }
-    };
-    testConnection();
 
-    // 1. Listen to RSVPs collection
-    const rsvpQuery = query(collection(db, 'rsvps'), orderBy('createdAt', 'desc'));
-    const unsubscribeRSVPs = onSnapshot(rsvpQuery, (snapshot) => {
-      const dbRSVPs: RSVP[] = [];
-      snapshot.forEach((doc) => {
-        dbRSVPs.push(doc.data() as RSVP);
-      });
-      if (dbRSVPs.length > 0) {
-        setRsvps(dbRSVPs);
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'rsvps');
-    });
+      if (!isMounted) return;
 
-    // 2. Listen to Guestbook/Wishes collection
-    const wishesQuery = query(collection(db, 'wishes'), orderBy('createdAt', 'desc'));
-    const unsubscribeWishes = onSnapshot(wishesQuery, async (snapshot) => {
-      const dbWishes: WishDua[] = [];
-      snapshot.forEach((doc) => {
-        dbWishes.push(doc.data() as WishDua);
+      // 1. Listen to RSVPs collection
+      const rsvpQuery = query(collection(db, 'rsvps'), orderBy('createdAt', 'desc'));
+      unsubscribeRSVPs = onSnapshot(rsvpQuery, (snapshot) => {
+        if (!isMounted) return;
+        const dbRSVPs: RSVP[] = [];
+        snapshot.forEach((doc) => {
+          dbRSVPs.push(doc.data() as RSVP);
+        });
+        if (dbRSVPs.length > 0) {
+          setRsvps(dbRSVPs);
+        }
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'rsvps');
       });
-      
-      if (dbWishes.length === 0) {
-        // Seeding empty database with initial wishes once
-        setWishes(initialWishes);
-        for (const wish of initialWishes) {
-          try {
-            await setDoc(doc(db, 'wishes', wish.id), wish);
-          } catch (e) {
-            console.error("Error seeding initial wish:", e);
+
+      // 2. Listen to Guestbook/Wishes collection with robust seeding & client merging fallback
+      const wishesQuery = query(collection(db, 'wishes'), orderBy('createdAt', 'desc'));
+      unsubscribeWishes = onSnapshot(wishesQuery, async (snapshot) => {
+        if (!isMounted) return;
+        const dbWishes: WishDua[] = [];
+        snapshot.forEach((doc) => {
+          dbWishes.push(doc.data() as WishDua);
+        });
+
+        // Determine which initial wishes are missing from the data returned by Firestore
+        const existingIds = new Set(dbWishes.map(w => w.id));
+        const missingInitial = initialWishes.filter(w => !existingIds.has(w.id));
+
+        // Always show the combination of Firestore-loaded wishes and missing initial/seed wishes.
+        // This ensures the website never has blank UI while first-time/background seeding occurs,
+        // and guarantees that added wishes don't get wiped out by state overrides during initial loads.
+        const combinedWishes = [...dbWishes, ...missingInitial].sort((a, b) => b.createdAt - a.createdAt);
+        setWishes(combinedWishes);
+
+        // If Firestore is completely empty on first launch, start silent background seeding
+        if (dbWishes.length === 0) {
+          for (const wish of initialWishes) {
+            setDoc(doc(db, 'wishes', wish.id), wish).catch((err) => {
+              console.error("Failed to seed initial wish background write:", wish.id, err);
+            });
           }
         }
-      } else {
-        setWishes(dbWishes);
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'wishes');
-    });
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'wishes');
+      });
+    };
+
+    setupSync();
 
     return () => {
+      isMounted = false;
       unsubscribeRSVPs();
       unsubscribeWishes();
     };
