@@ -554,11 +554,11 @@ export default function App() {
               <div className="pt-6 border-t border-amber-200/40 space-y-4 text-center" id="support-footer-mini">
                 <p className="font-sans text-[9px] font-bold text-emerald-950 tracking-[0.2em] uppercase">KINDLY RSVP SUPPORT</p>
                 
-                <div className="space-y-3 max-w-sm mx-auto text-left">
+                <div className="space-y-3 max-w-sm mx-auto text-center">
                   {/* Faththah's Support */}
                   <div className="bg-amber-50/40 p-2.5 rounded-2xl border border-amber-100/65 space-y-1.5">
                     <p className="font-sans text-[8.5px] uppercase tracking-wider text-amber-900/60 font-medium">Abdul Faththah (Groom)</p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 max-w-xs mx-auto">
                       <a 
                         href="tel:+971564882795" 
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-white border border-amber-100 rounded-full text-[10px] text-amber-900/95 font-bold transition-all active:scale-95 shadow-2xs group"
@@ -568,29 +568,6 @@ export default function App() {
                       </a>
                       <a 
                         href="https://wa.me/971564882795" 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-emerald-50/60 border border-emerald-100/40 rounded-full text-[10px] text-emerald-800 font-bold transition-all active:scale-95 shadow-2xs group"
-                      >
-                        <MessageCircle className="w-2.5 h-2.5 text-emerald-600 fill-emerald-50 group-hover:scale-110 transition-transform" />
-                        <span>WhatsApp</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Farveen's Support */}
-                  <div className="bg-amber-50/40 p-2.5 rounded-2xl border border-amber-100/65 space-y-1.5">
-                    <p className="font-sans text-[8.5px] uppercase tracking-wider text-amber-900/60 font-medium">Fathima Farveen (Bride)</p>
-                    <div className="flex gap-2">
-                      <a 
-                        href="tel:+971589794114" 
-                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-white border border-amber-100 rounded-full text-[10px] text-amber-900/95 font-bold transition-all active:scale-95 shadow-2xs group"
-                      >
-                        <Phone className="w-2.5 h-2.5 text-amber-700 group-hover:scale-110 transition-transform" />
-                        <span>Call</span>
-                      </a>
-                      <a 
-                        href="https://wa.me/971589794114" 
                         target="_blank" 
                         rel="noreferrer" 
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-emerald-50/60 border border-emerald-100/40 rounded-full text-[10px] text-emerald-800 font-bold transition-all active:scale-95 shadow-2xs group"
