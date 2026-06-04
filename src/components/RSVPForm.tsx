@@ -319,29 +319,20 @@ export default function RSVPForm({ onRSVPSubmit, guestRSVPs, weddingDetails }: R
             <div className="my-5 p-3.5 bg-emerald-50/40 border border-emerald-300/30 rounded-xl space-y-2 text-left shadow-2xs">
               <span className="text-[9px] uppercase font-extrabold tracking-widest text-emerald-950 block text-center mb-0.5 flex items-center justify-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] inline-block animate-ping"></span>
-                📲 OPTIONAL: NOTIFY FAMILIES VIA WHATSAPP
+                📲 OPTIONAL: NOTIFY GROOM VIA WHATSAPP
               </span>
               <p className="text-[9px] text-emerald-900/60 text-center leading-normal mb-3 leading-relaxed">
-                Click a button below to automatically send your invitation RSVP details directly to either family over WhatsApp!
+                Click below to automatically send your invitation RSVP details directly to Groom over WhatsApp!
               </p>
-              <div className="grid grid-cols-2 gap-2" id="whatsapp-notify-actions">
+              <div className="flex justify-center" id="whatsapp-notify-actions">
                 <a
                   href={getWhatsAppLink(weddingDetails?.groomPhone || '+971 56 488 2795')}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-center gap-1.5 p-2 bg-emerald-500/10 hover:bg-[#25D366] border border-[#25D366]/45 text-emerald-950 hover:text-white font-sans font-bold transition-all duration-300 uppercase shrink-0 rounded-lg text-[9.5px] cursor-pointer"
+                  className="w-full max-w-xs flex items-center justify-center gap-1.5 p-2.5 bg-emerald-500/10 hover:bg-[#25D366] border border-[#25D366]/45 text-emerald-950 hover:text-white font-sans font-bold transition-all duration-300 uppercase shrink-0 rounded-lg text-[10.5px] cursor-pointer"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Groom's Side</span>
-                </a>
-                <a
-                  href={getWhatsAppLink(weddingDetails?.bridePhone || '+971 58 979 4114')}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-1.5 p-2 bg-emerald-500/10 hover:bg-[#25D366] border border-[#25D366]/45 text-emerald-950 hover:text-white font-sans font-bold transition-all duration-300 uppercase shrink-0 rounded-lg text-[9.5px] cursor-pointer"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Bride's Side</span>
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Notify Groom Side</span>
                 </a>
               </div>
             </div>
