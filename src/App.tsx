@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ViewMode, RSVP, WishDua, WeddingDetails } from './types';
 import { getHijriYear } from './lib/dateUtils';
-import { db, handleFirestoreError, OperationType } from './lib/firebase';
-import { collection, onSnapshot, query, orderBy, setDoc, doc, updateDoc, increment, getDocFromServer } from 'firebase/firestore';
+// Removed legacy Firestore imports (migrated to PostgreSQL / Cloud SQL via Express server API)
 import RSVPForm from './components/RSVPForm';
 import Guestbook from './components/Guestbook';
 import EventDetails from './components/EventDetails';
@@ -98,6 +97,10 @@ export default function App() {
     return saved ? JSON.parse(saved) : initialWishes;
   });
 
+  // Track locally added items that might not have processed or sync-returned from the backend yet
+  const [localRSVPs, setLocalRSVPs] = useState<RSVP[]>([]);
+  const [localWishes, setLocalWishes] = useState<WishDua[]>([]);
+
   // Dynamic Website details configuration with localStorage persistence
   const [weddingDetails, setWeddingDetails] = useState<WeddingDetails>(() => {
     const saved = localStorage.getItem('wedding_details');
@@ -161,78 +164,68 @@ export default function App() {
     localStorage.setItem('wedding_wishes', JSON.stringify(wishes));
   }, [wishes]);
 
-  // Real-time Firestore synchronizer
+  // Real-time SQL backend synchronizer for RSVPs and Wishes
   useEffect(() => {
     let isMounted = true;
-    let unsubscribeRSVPs = () => {};
-    let unsubscribeWishes = () => {};
+    let intervalId: any;
 
-    const setupSync = async () => {
+    const fetchData = async () => {
       try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('the client is offline')) {
-          console.warn("Please check your Firebase configuration.");
+        const [rsvpsRes, wishesRes] = await Promise.all([
+          fetch('/api/rsvps'),
+          fetch('/api/wishes')
+        ]);
+        
+        if (!isMounted) return;
+
+        if (rsvpsRes.ok) {
+          const dbRSVPs = await rsvpsRes.json();
+          const dbRSVPIds = new Set(dbRSVPs.map((r: any) => r.id));
+          
+          // Clean up localRSVPs once they are successfully saved and returned from the database
+          setLocalRSVPs(prev => prev.filter(r => !dbRSVPIds.has(r.id)));
+
+          // Get any locally added RSVPs that are still pending write-sync
+          setLocalRSVPs(currentLocal => {
+            const pendingLocal = currentLocal.filter(r => !dbRSVPIds.has(r.id));
+            const combinedRSVPs = [...pendingLocal, ...dbRSVPs].sort((a, b) => b.createdAt - a.createdAt);
+            setRsvps(combinedRSVPs);
+            return currentLocal;
+          });
         }
+
+        if (wishesRes.ok) {
+          const dbWishes = await wishesRes.json();
+          const dbWishIds = new Set(dbWishes.map((w: any) => w.id));
+
+          // Clean up localWishes once they are successfully saved and returned from the database
+          setLocalWishes(prev => prev.filter(w => !dbWishIds.has(w.id)));
+
+          // Get any locally added wishes that are still pending write-sync
+          setLocalWishes(currentLocal => {
+            const pendingLocal = currentLocal.filter(w => !dbWishIds.has(w.id));
+            const existingIds = new Set([...dbWishes.map((w: any) => w.id), ...pendingLocal.map(w => w.id)]);
+            const missingInitial = initialWishes.filter(w => !existingIds.has(w.id));
+            
+            const combinedWishes = [...pendingLocal, ...dbWishes, ...missingInitial].sort((a, b) => b.createdAt - a.createdAt);
+            setWishes(combinedWishes);
+            return currentLocal;
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching data from SQL backend:", err);
       }
-
-      if (!isMounted) return;
-
-      // 1. Listen to RSVPs collection
-      const rsvpQuery = query(collection(db, 'rsvps'), orderBy('createdAt', 'desc'));
-      unsubscribeRSVPs = onSnapshot(rsvpQuery, (snapshot) => {
-        if (!isMounted) return;
-        const dbRSVPs: RSVP[] = [];
-        snapshot.forEach((doc) => {
-          dbRSVPs.push(doc.data() as RSVP);
-        });
-        if (dbRSVPs.length > 0) {
-          setRsvps(dbRSVPs);
-        }
-      }, (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'rsvps');
-      });
-
-      // 2. Listen to Guestbook/Wishes collection with robust seeding & client merging fallback
-      const wishesQuery = query(collection(db, 'wishes'), orderBy('createdAt', 'desc'));
-      unsubscribeWishes = onSnapshot(wishesQuery, async (snapshot) => {
-        if (!isMounted) return;
-        const dbWishes: WishDua[] = [];
-        snapshot.forEach((doc) => {
-          dbWishes.push(doc.data() as WishDua);
-        });
-
-        // Determine which initial wishes are missing from the data returned by Firestore
-        const existingIds = new Set(dbWishes.map(w => w.id));
-        const missingInitial = initialWishes.filter(w => !existingIds.has(w.id));
-
-        // Always show the combination of Firestore-loaded wishes and missing initial/seed wishes.
-        // This ensures the website never has blank UI while first-time/background seeding occurs,
-        // and guarantees that added wishes don't get wiped out by state overrides during initial loads.
-        const combinedWishes = [...dbWishes, ...missingInitial].sort((a, b) => b.createdAt - a.createdAt);
-        setWishes(combinedWishes);
-
-        // If Firestore is completely empty on first launch, start silent background seeding
-        if (dbWishes.length === 0) {
-          for (const wish of initialWishes) {
-            setDoc(doc(db, 'wishes', wish.id), wish).catch((err) => {
-              console.error("Failed to seed initial wish background write:", wish.id, err);
-            });
-          }
-        }
-      }, (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'wishes');
-      });
     };
 
-    setupSync();
+    fetchData();
+    // Poll every 5 seconds for real-time updates
+    intervalId = setInterval(fetchData, 5000);
 
     return () => {
       isMounted = false;
-      unsubscribeRSVPs();
-      unsubscribeWishes();
+      clearInterval(intervalId);
     };
-  }, []);
+  }, [initialWishes]);
 
   const generateSafeUUID = () => {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
@@ -256,13 +249,24 @@ export default function App() {
       createdAt: Date.now(),
     };
     
+    // Add to localRSVPs so they are preserved in memory during server poll roundtrips
+    setLocalRSVPs(prev => [rsvp, ...prev]);
     // Optimistic UI update
     setRsvps(prev => [rsvp, ...prev.filter(r => r.id !== rsvp.id)]);
 
     try {
-      await setDoc(doc(db, 'rsvps', rsvp.id), rsvp);
+      const response = await fetch('/api/rsvps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rsvp)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save RSVP to PostgreSQL');
+      }
     } catch (e) {
-      handleFirestoreError(e, OperationType.CREATE, `rsvps/${rsvp.id}`);
+      console.error("Error saving RSVP to SQL:", e);
     }
 
     // Async push to Google Sheets Webhook if configured in Admin settings
@@ -292,13 +296,24 @@ export default function App() {
       createdAt: Date.now(),
     };
     
+    // Add to localWishes so they are preserved in memory during server poll roundtrips
+    setLocalWishes(prev => [wish, ...prev]);
     // Optimistic UI update
     setWishes(prev => [wish, ...prev.filter(w => w.id !== wish.id)]);
 
     try {
-      await setDoc(doc(db, 'wishes', wish.id), wish);
+      const response = await fetch('/api/wishes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(wish)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save wish to PostgreSQL');
+      }
     } catch (e) {
-      handleFirestoreError(e, OperationType.CREATE, `wishes/${wish.id}`);
+      console.error("Error saving wish to SQL:", e);
     }
   };
 
@@ -307,11 +322,14 @@ export default function App() {
     setWishes(prev => prev.map(w => w.id === id ? { ...w, likes: w.likes + 1 } : w));
 
     try {
-      await updateDoc(doc(db, 'wishes', id), {
-        likes: increment(1)
+      const response = await fetch(`/api/wishes/${id}/like`, {
+        method: 'POST',
       });
+      if (!response.ok) {
+        throw new Error('Failed to update likes in PostgreSQL');
+      }
     } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `wishes/${id}`);
+      console.error("Error updating likes in SQL:", e);
     }
   };
 
@@ -554,11 +572,11 @@ export default function App() {
               <div className="pt-6 border-t border-amber-200/40 space-y-4 text-center" id="support-footer-mini">
                 <p className="font-sans text-[9px] font-bold text-emerald-950 tracking-[0.2em] uppercase">KINDLY RSVP SUPPORT</p>
                 
-                <div className="space-y-3 max-w-sm mx-auto text-center">
+                <div className="space-y-3 max-w-sm mx-auto text-left">
                   {/* Faththah's Support */}
                   <div className="bg-amber-50/40 p-2.5 rounded-2xl border border-amber-100/65 space-y-1.5">
                     <p className="font-sans text-[8.5px] uppercase tracking-wider text-amber-900/60 font-medium">Abdul Faththah (Groom)</p>
-                    <div className="flex gap-2 max-w-xs mx-auto">
+                    <div className="flex gap-2">
                       <a 
                         href="tel:+971564882795" 
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-white border border-amber-100 rounded-full text-[10px] text-amber-900/95 font-bold transition-all active:scale-95 shadow-2xs group"
@@ -568,6 +586,29 @@ export default function App() {
                       </a>
                       <a 
                         href="https://wa.me/971564882795" 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-emerald-50/60 border border-emerald-100/40 rounded-full text-[10px] text-emerald-800 font-bold transition-all active:scale-95 shadow-2xs group"
+                      >
+                        <MessageCircle className="w-2.5 h-2.5 text-emerald-600 fill-emerald-50 group-hover:scale-110 transition-transform" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Farveen's Support */}
+                  <div className="bg-amber-50/40 p-2.5 rounded-2xl border border-amber-100/65 space-y-1.5">
+                    <p className="font-sans text-[8.5px] uppercase tracking-wider text-amber-900/60 font-medium">Fathima Farveen (Bride)</p>
+                    <div className="flex gap-2">
+                      <a 
+                        href="tel:+971589794114" 
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-white border border-amber-100 rounded-full text-[10px] text-amber-900/95 font-bold transition-all active:scale-95 shadow-2xs group"
+                      >
+                        <Phone className="w-2.5 h-2.5 text-amber-700 group-hover:scale-110 transition-transform" />
+                        <span>Call</span>
+                      </a>
+                      <a 
+                        href="https://wa.me/971589794114" 
                         target="_blank" 
                         rel="noreferrer" 
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-emerald-50/60 border border-emerald-100/40 rounded-full text-[10px] text-emerald-800 font-bold transition-all active:scale-95 shadow-2xs group"
@@ -841,16 +882,16 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="max-w-md mx-auto text-center" id="contact-pills">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto text-left" id="contact-pills">
                 {/* Groom's Contact Card */}
                 <div className="bg-white/60 backdrop-blur-md border border-amber-200/30 rounded-2xl p-4 space-y-3 shadow-xs">
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                     <p className="font-sans font-extrabold text-[#11312c] tracking-[0.1em] text-[10px] uppercase">
                       {weddingDetails.groomName} (Groom)
                     </p>
                   </div>
-                  <div className="flex gap-2 justify-center max-w-xs mx-auto">
+                  <div className="flex gap-2">
                     <a 
                       href={`tel:${(weddingDetails.groomPhone || '+971 56 488 2795').replace(/[^0-9+]/g, '')}`} 
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-amber-50 border border-amber-200/50 rounded-full text-amber-900/95 hover:text-amber-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
@@ -860,6 +901,34 @@ export default function App() {
                     </a>
                     <a 
                       href={`https://wa.me/${(weddingDetails.groomPhone || '+971 56 488 2795').replace(/[^0-9]/g, '')}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-50/60 hover:bg-emerald-50/95 border border-emerald-200/40 rounded-full text-emerald-800 hover:text-emerald-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600 fill-emerald-50 group-hover:scale-110 transition-transform" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Bride's Contact Card */}
+                <div className="bg-white/60 backdrop-blur-md border border-amber-200/30 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                    <p className="font-sans font-extrabold text-[#11312c] tracking-[0.1em] text-[10px] uppercase">
+                      {weddingDetails.brideName} (Bride)
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <a 
+                      href={`tel:${(weddingDetails.bridePhone || '+971 58 979 4114').replace(/[^0-9+]/g, '')}`} 
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-amber-50 border border-amber-200/50 rounded-full text-amber-900/95 hover:text-amber-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
+                      <span>Call</span>
+                    </a>
+                    <a 
+                      href={`https://wa.me/${(weddingDetails.bridePhone || '+971 58 979 4114').replace(/[^0-9]/g, '')}`} 
                       target="_blank" 
                       rel="noreferrer" 
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-50/60 hover:bg-emerald-50/95 border border-emerald-200/40 rounded-full text-emerald-800 hover:text-emerald-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
