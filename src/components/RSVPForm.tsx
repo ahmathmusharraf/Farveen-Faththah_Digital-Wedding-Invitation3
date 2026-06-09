@@ -322,17 +322,17 @@ export default function RSVPForm({ onRSVPSubmit, guestRSVPs, weddingDetails }: R
                 📲 OPTIONAL: NOTIFY GROOM VIA WHATSAPP
               </span>
               <p className="text-[9px] text-emerald-900/60 text-center leading-normal mb-3 leading-relaxed">
-                Click below to automatically send your invitation RSVP details directly to Groom over WhatsApp!
+                Click the button below to automatically send your invitation RSVP details directly to the Groom over WhatsApp!
               </p>
-              <div className="flex justify-center" id="whatsapp-notify-actions">
+              <div className="grid grid-cols-1 gap-2" id="whatsapp-notify-actions">
                 <a
                   href={getWhatsAppLink(weddingDetails?.groomPhone || '+971 56 488 2795')}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full max-w-xs flex items-center justify-center gap-1.5 p-2.5 bg-emerald-500/10 hover:bg-[#25D366] border border-[#25D366]/45 text-emerald-950 hover:text-white font-sans font-bold transition-all duration-300 uppercase shrink-0 rounded-lg text-[10.5px] cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 p-2 bg-emerald-500/10 hover:bg-[#25D366] border border-[#25D366]/45 text-emerald-950 hover:text-white font-sans font-bold transition-all duration-300 uppercase shrink-0 rounded-lg text-[9.5px] cursor-pointer"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Notify Groom Side</span>
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Groom's Side</span>
                 </a>
               </div>
             </div>
