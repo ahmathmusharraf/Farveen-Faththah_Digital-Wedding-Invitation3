@@ -859,7 +859,7 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto text-left" id="contact-pills">
+              <div className="max-w-xs mx-auto text-left" id="contact-pills">
                 {/* Groom's Contact Card */}
                 <div className="bg-white/60 backdrop-blur-md border border-amber-200/30 rounded-2xl p-4 space-y-3 shadow-xs">
                   <div className="flex items-center gap-2">
@@ -878,34 +878,6 @@ export default function App() {
                     </a>
                     <a 
                       href={`https://wa.me/${(weddingDetails.groomPhone || '+971 56 488 2795').replace(/[^0-9]/g, '')}`} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-50/60 hover:bg-emerald-50/95 border border-emerald-200/40 rounded-full text-emerald-800 hover:text-emerald-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600 fill-emerald-50 group-hover:scale-110 transition-transform" />
-                      <span>WhatsApp</span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* Bride's Contact Card (Hidden on Mobile screens) */}
-                <div className="hidden sm:block bg-white/60 backdrop-blur-md border border-amber-200/30 rounded-2xl p-4 space-y-3 shadow-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                    <p className="font-sans font-extrabold text-[#11312c] tracking-[0.1em] text-[10px] uppercase">
-                      {weddingDetails.brideName} (Bride)
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <a 
-                      href={`tel:${(weddingDetails.bridePhone || '+971 58 979 4114').replace(/[^0-9+]/g, '')}`} 
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-amber-50 border border-amber-200/50 rounded-full text-amber-900/95 hover:text-amber-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
-                    >
-                      <Phone className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
-                      <span>Call</span>
-                    </a>
-                    <a 
-                      href={`https://wa.me/${(weddingDetails.bridePhone || '+971 58 979 4114').replace(/[^0-9]/g, '')}`} 
                       target="_blank" 
                       rel="noreferrer" 
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-50/60 hover:bg-emerald-50/95 border border-emerald-200/40 rounded-full text-emerald-800 hover:text-emerald-950 font-bold transition-all duration-300 text-[10.5px] shadow-2xs active:scale-95 group"
